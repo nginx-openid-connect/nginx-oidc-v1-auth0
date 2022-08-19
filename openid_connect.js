@@ -388,7 +388,6 @@ function generateCustomEndpoint(r, uri, isEnableCustomPath, paths) {
     var res   = '';
     var key   = '';
     var isKey = false;
-    r.log('### paths: ' + paths)
     var items = JSON.parse(paths);
     for (var i = 0; i < uri.length; i++) {
         switch (uri[i]) {
