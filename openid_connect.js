@@ -333,13 +333,6 @@ function redirectPostLogout(r) {
 //         of 'OpenID Connect RP-Initiated Logout 1.0'.
 // - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
 // - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
-// function logout(r) {
-//     r.log("OIDC logout for " + r.variables.cookie_auth_token);
-//     r.variables.session_jwt = "-";
-//     r.variables.refresh_token = "-";
-//     r.return(302, r.variables.oidc_logout_redirect);
-// }
-
 function logout(r) {
     r.log('OIDC logout for ' + r.variables.request_id);
     var logout_endpoint = generateCustomEndpoint(r,
