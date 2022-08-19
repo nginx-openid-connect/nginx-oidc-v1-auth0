@@ -5,7 +5,17 @@
  */
 var newSession = false; // Used by oidcAuth() and validateIdToken()
 
-export default {auth, codeExchange, validateIdToken, logout};
+export default {
+    auth,
+    codeExchange,
+    validateIdToken,
+    logout,
+    redirectPostLogin,
+    redirectPostLogout,
+    testAccessTokenPayload,
+    testExtractToken,
+    testIdTokenPayload
+};
 
 function retryOriginalRequest(r) {
     delete r.headersOut["WWW-Authenticate"]; // Remove evidence of original failed auth_jwt
@@ -104,6 +114,7 @@ function auth(r, afterSyncCheck) {
                         // ID Token is valid, update keyval
                         r.log("OIDC refresh success, updating id_token for " + r.variables.cookie_auth_token);
                         r.variables.session_jwt = tokenset.id_token; // Update key-value store
+                        r.variables.access_token = tokenset.access_token; // Update key-value store
 
                         // Update refresh token (if we got a new one)
                         if (r.variables.refresh_token != tokenset.refresh_token) {
@@ -187,6 +198,7 @@ function codeExchange(r) {
                         // Add opaque token to keyval session store
                         r.log("OIDC success, creating session " + r.variables.request_id);
                         r.variables.new_session = tokenset.id_token; // Create key-value store entry
+                        r.variables.new_access_token = tokenset.access_token;
                         r.headersOut["Set-Cookie"] = "auth_token=" + r.variables.request_id + "; " + r.variables.oidc_cookie_flags;
                         r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
                    }
@@ -253,20 +265,14 @@ function validateIdToken(r) {
     }
 }
 
-function logout(r) {
-    r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    r.variables.session_jwt = "-";
-    r.variables.refresh_token = "-";
-    r.return(302, r.variables.oidc_logout_redirect);
-}
-
 function getAuthZArgs(r) {
     // Choose a nonce for this flow for the client, and hash it for the IdP
     var noncePlain = r.variables.request_id;
     var c = require('crypto');
     var h = c.createHmac('sha256', r.variables.oidc_hmac_key).update(noncePlain);
     var nonceHash = h.digest('base64url');
-    var authZArgs = "?response_type=code&scope=" + r.variables.oidc_scopes + "&client_id=" + r.variables.oidc_client + "&redirect_uri="+ r.variables.redirect_base + r.variables.redir_location + "&nonce=" + nonceHash;
+    var audArg = '&audience=' + 'https://' + r.variables.idp_domain + '/api/v2/';
+    var authZArgs = "?response_type=code&scope=" + r.variables.oidc_scopes + "&client_id=" + r.variables.oidc_client + "&redirect_uri="+ r.variables.redirect_base + r.variables.redir_location + audArg + "&nonce=" + nonceHash;
 
     r.headersOut['Set-Cookie'] = [
         "auth_redir=" + r.variables.request_uri + "; " + r.variables.oidc_cookie_flags,
@@ -294,4 +300,218 @@ function idpClientAuth(r) {
     } else {
         return "code=" + r.variables.arg_code + "&client_secret=" + r.variables.oidc_client_secret;
     }   
+}
+
+// Redirect URI after logging in the IDP.
+function redirectPostLogin(r) {
+    r.return(302, r.variables.redirect_base + getIDTokenArgsAfterLogin(r));
+}
+
+// Get query parameter of ID token after sucessful login:
+//
+// - For the variable of `returnTokenToClientOnLogin` of the APIM, this config
+//   is only effective for /login endpoint. By default, our implementation MUST
+//   not return any token back to the client app. 
+// - If its configured it can send id_token in the request uri as 
+//   `?id_token=sdfsdfdsfs` after successful login. 
+//
+function getIDTokenArgsAfterLogin(r) {
+    if (r.variables.return_token_to_client_on_login == 'id_token') {
+        return '?id_token=' + r.variables.id_token;
+    }
+    return '';
+}
+
+// Redirect URI after logged-out from the IDP.
+function redirectPostLogout(r) {
+    r.return(302, r.variables.post_logout_return_uri);
+}
+
+
+// RP-Initiated or Custom Logout w/ IDP:
+// 
+// - An RP requests that the IDP log out the end-user by redirecting the
+//   end-user's User Agent to the IDP's Logout endpoint.
+// - TODO: Handle custom logout parameters if IDP doesn't support standard spec
+//         of 'OpenID Connect RP-Initiated Logout 1.0'.
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
+// function logout(r) {
+//     r.log("OIDC logout for " + r.variables.cookie_auth_token);
+//     r.variables.session_jwt = "-";
+//     r.variables.refresh_token = "-";
+//     r.return(302, r.variables.oidc_logout_redirect);
+// }
+
+function logout(r) {
+    r.log('OIDC logout for ' + r.variables.request_id);
+    var logout_endpoint = generateCustomEndpoint(r,
+        r.variables.oidc_logout_endpoint,
+        r.variables.oidc_logout_path_params_enable,
+        r.variables.oidc_logout_path_params
+    );
+    var queryParams = '';
+    var idToken = r.variables.session_jwt;
+
+    // OIDC RP-initiated logout.
+    if (r.variables.oidc_logout_query_params_enable == 0) {
+        queryParams = getRPInitiatedLogoutArgs(r, idToken);
+
+    // Call the IDP logout endpoint with custom query parameters
+    // if the IDP doesn't support RP-initiated logout.
+    } else {
+        queryParams = generateQueryParams(r.variables.oidc_logout_query_params);
+    }
+    r.variables.request_id    = '-';
+    r.variables.session_jwt   = '-';
+    r.variables.access_token  = '-';
+    r.variables.refresh_token = '-';
+    r.return(302, logout_endpoint + queryParams);
+}
+
+// Generate custom endpoint using path parameters if the option is enable.
+// Otherwise, return the original endpoint.
+//
+// [Example 1]
+// - Input : "https://{my-app}.okta.com/oauth2/{version}/logout"
+//   + {my-app}  -> 'dev-9590480'
+//   + {version} -> 'v1'
+// - Result: "https://dev-9590480.okta.okta.com/oauth2/v1/logout"
+//
+// [Example 2]
+// - Input : "https://{my-app}.okta.com/oauth2/{version}/authorize"
+//   + {my-app}  -> 'dev-9590480'
+//   + {version} -> 'v1'
+// - Result: "https://dev-9590480.okta.okta.com/oauth2/v1/authorize"
+//
+function generateCustomEndpoint(r, uri, isEnableCustomPath, paths) {
+    if (isEnableCustomPath == 0) {
+        return uri;
+    }
+    var res   = '';
+    var key   = '';
+    var isKey = false;
+    r.log('### paths: ' + paths)
+    var items = JSON.parse(paths);
+    for (var i = 0; i < uri.length; i++) {
+        switch (uri[i]) {
+            case '{': 
+                isKey = true; 
+                break;
+            case '}': 
+                res  += items[key]
+                key   = '';
+                isKey = false; 
+                break;
+            default : 
+                if (!isKey) {
+                    res += uri[i];
+                } else {
+                    key += uri[i];
+                }
+        }
+    }
+    r.log('generated an endpoint using path params: ' + res)
+    return res;
+}
+
+// Get query params for RP-initiated logout:
+//
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
+//
+function getRPInitiatedLogoutArgs(r, idToken) {
+    return '?post_logout_redirect_uri=' + r.variables.redirect_base
+                                        + r.variables.oidc_logout_redirect +
+           '&id_token_hint='            + idToken;
+}
+
+// Generate custom query parameters from JSON object
+function generateQueryParams(obj) {
+    var items = JSON.parse(obj);
+    var args = '?'
+    for (var key in items) {
+        args += key + '=' + items[key] + '&'
+    }
+    return args.slice(0, -1)
+}
+
+// Extract ID/access token from the request header.
+function extractToken(r, key, is_bearer, validation_uri, msg) {
+    var token = '';
+    try {
+        var headers = r.headersIn[key].split(' ');
+        if (is_bearer) {
+            if (headers[0] === 'Bearer') {
+                token = headers[1]
+            } else {
+                msg += `, "` + key + `": "N/A"`;
+                return [true, msg];
+            }
+        } else {
+            token = headers[0]
+        }
+        if (!isValidToken(r, validation_uri, token)) {
+            msg += `, "` + key + `": "invalid"}\n`;
+            r.return(401, msg);
+            return [false, msg];
+        } else {
+            msg += `, "` + key + `": "` + token + `"`;
+        }
+    } catch (e) {
+        msg += `, "` + key + `": "N/A"`;
+    }
+    return [true, msg];
+}
+
+// Return JWT header and payload
+function jwt(r, token) {
+    var parts = token.split('.').slice(0,2)
+        .map(v=>Buffer.from(v, 'base64url').toString())
+        .map(JSON.parse);
+    return { 
+        headers: parts[0], 
+        payload: parts[1] 
+    };
+}
+
+// Test for extracting bearer token from the header of API request.
+function testExtractToken (r) {
+    var msg = `{
+        "message": "This is to show which token is part of proxy header(s) in a server app.",
+        "uri":"` + r.variables.request_uri + `"`;
+    var res = extractToken(r, 'Authorization', true, '/_access_token_validation', msg)
+    if (!res[0]) {
+        return 
+    }
+    msg = res[1]
+
+    var res = extractToken(r, 'x-id-token', false, '/_id_token_validation', msg)
+    if (!res[0]) {
+        return 
+    }
+    msg = res[1]
+
+    var body = msg + '}\n';
+    r.return(200, body);
+}
+
+// Test for extracting sub, subgroups (custom claim) from token
+function testTokenBodyWithCustomClaim(r, token) {
+    var res = jwt(r, token)
+    var msgToken = `"token": "` + token + `"`
+    var msgSub = `"sub": "` + res.payload.sub + `"`
+    var msgSubGroups = `"subgroups": "` + res.payload.subgroups + `"`
+    var body = `{` + msgToken + `,` + msgSub + `,` + msgSubGroups + `}`
+    return body
+}
+
+// Return access token details with custom claim for testing
+function testAccessTokenPayload(r) {
+    r.return(200, testTokenBodyWithCustomClaim(r, r.variables.access_token))
+}
+
+// Return ID token details with custom claim for testing
+function testIdTokenPayload(r) {
+    r.return(200, testTokenBodyWithCustomClaim(r, r.variables.session_jwt))
 }
