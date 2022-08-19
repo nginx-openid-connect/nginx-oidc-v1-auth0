@@ -11,10 +11,7 @@ export default {
     validateIdToken,
     logout,
     redirectPostLogin,
-    redirectPostLogout,
-    testAccessTokenPayload,
-    testExtractToken,
-    testIdTokenPayload
+    redirectPostLogout
 };
 
 function retryOriginalRequest(r) {
@@ -434,84 +431,4 @@ function generateQueryParams(obj) {
         args += key + '=' + items[key] + '&'
     }
     return args.slice(0, -1)
-}
-
-// Extract ID/access token from the request header.
-function extractToken(r, key, is_bearer, validation_uri, msg) {
-    var token = '';
-    try {
-        var headers = r.headersIn[key].split(' ');
-        if (is_bearer) {
-            if (headers[0] === 'Bearer') {
-                token = headers[1]
-            } else {
-                msg += `, "` + key + `": "N/A"`;
-                return [true, msg];
-            }
-        } else {
-            token = headers[0]
-        }
-        if (!isValidToken(r, validation_uri, token)) {
-            msg += `, "` + key + `": "invalid"}\n`;
-            r.return(401, msg);
-            return [false, msg];
-        } else {
-            msg += `, "` + key + `": "` + token + `"`;
-        }
-    } catch (e) {
-        msg += `, "` + key + `": "N/A"`;
-    }
-    return [true, msg];
-}
-
-// Return JWT header and payload
-function jwt(r, token) {
-    var parts = token.split('.').slice(0,2)
-        .map(v=>Buffer.from(v, 'base64url').toString())
-        .map(JSON.parse);
-    return { 
-        headers: parts[0], 
-        payload: parts[1] 
-    };
-}
-
-// Test for extracting bearer token from the header of API request.
-function testExtractToken (r) {
-    var msg = `{
-        "message": "This is to show which token is part of proxy header(s) in a server app.",
-        "uri":"` + r.variables.request_uri + `"`;
-    var res = extractToken(r, 'Authorization', true, '/_access_token_validation', msg)
-    if (!res[0]) {
-        return 
-    }
-    msg = res[1]
-
-    var res = extractToken(r, 'x-id-token', false, '/_id_token_validation', msg)
-    if (!res[0]) {
-        return 
-    }
-    msg = res[1]
-
-    var body = msg + '}\n';
-    r.return(200, body);
-}
-
-// Test for extracting sub, subgroups (custom claim) from token
-function testTokenBodyWithCustomClaim(r, token) {
-    var res = jwt(r, token)
-    var msgToken = `"token": "` + token + `"`
-    var msgSub = `"sub": "` + res.payload.sub + `"`
-    var msgSubGroups = `"subgroups": "` + res.payload.subgroups + `"`
-    var body = `{` + msgToken + `,` + msgSub + `,` + msgSubGroups + `}`
-    return body
-}
-
-// Return access token details with custom claim for testing
-function testAccessTokenPayload(r) {
-    r.return(200, testTokenBodyWithCustomClaim(r, r.variables.access_token))
-}
-
-// Return ID token details with custom claim for testing
-function testIdTokenPayload(r) {
-    r.return(200, testTokenBodyWithCustomClaim(r, r.variables.session_jwt))
 }
