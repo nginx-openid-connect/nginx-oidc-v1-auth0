@@ -199,7 +199,7 @@ RUN    chmod -R 777 /usr/share/nginx/html/css
 COPY  docker/build-context/content/   /usr/share/nginx/html/
 COPY  docker/build-context/nginx/     /etc/nginx/
 COPY  oidc*.conf                      /etc/nginx/conf.d/
-COPY  oidc*.js                        /etc/nginx/conf.d/
+COPY  openid*.*                       /etc/nginx/conf.d/
 
 # EXPOSE ports, HTTP 80, HTTPS 443 and, Nginx status page 8010
 STOPSIGNAL SIGTERM
