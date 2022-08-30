@@ -16,12 +16,12 @@ The following features are enhanced from the [nginx-oidc-core-v1](https://github
 
 ## 2. Getting Started
 
-> | Steps               | Docs                                                                 |
-> | ------------------- | -------------------------------------------------------------------- |
-> | 1) IdP Setup        | [How To Configure Auth0](./docs/01-Auth0-Setup.md)                   |
-> | 2) NGINX Plus Setup | [How To Configure NGINX Plus](./docs/02-NGINX-Plus-Setup.md)         |
-> | 3) OIDC Test        | [How To Test OIDC in Containerized App](./docs/03-Container-Test.md) |
-> |                     | [How To Test OIDC in Dev Portal](./docs/04-NGINX-DevPortal-Test.md)  |
+> | Steps                    | Docs                                                                 |
+> | ------------------------ | -------------------------------------------------------------------- |
+> | 1) IdP Setup             | [How To Configure Auth0](./docs/01-Auth0-Setup.md)                   |
+> | 2) NGINX Plus OIDC Setup | [How To Configure NGINX Plus OIDC](./docs/02-NGINX-Plus-Setup.md)    |
+> | 3) OIDC Test             | [How To Test OIDC in Containerized App](./docs/03-Container-Test.md) |
+> |                          | [How To Test OIDC in Dev Portal](./docs/04-NGINX-DevPortal-Test.md)  |
 
 ## References
 
