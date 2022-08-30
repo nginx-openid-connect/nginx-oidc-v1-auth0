@@ -127,13 +127,13 @@ This repo provides a sample container environment. So you can skip this step if 
 
 3. Copy the following directory to the `/usr/share/nginx/html/` directory on the host machine where NGINX Plus is installed:
 
-   ```nginx
+   ```bash
     cp -R docker/build-context/content/ /usr/share/nginx/html/
    ```
 
    > Note:
    >
-   > Skip this step if you have your frontend files as these files are a sample frontend apps to test the OIDC.
+   > Skip this step if you have your frontend files as these files are a sample frontend app to test the OIDC.
 
 4. Reload the NGINX configuration:
 
