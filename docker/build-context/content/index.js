@@ -75,11 +75,6 @@ var eventHandlerProxiedAPI = function (evt) {
   )
 };
 
-// Event Handler: for when clicking a 'Get User Info' button.
-var eventHandlerUserInfo = function (evt) {
-  showUserInfo(evt)
-};
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                             *
@@ -157,7 +152,7 @@ var doAPIRequest = function(evt, uri, msgBefore, msgAfter, headers) {
   .catch(function(error) {
     if (uri == '/userinfo') {
       initButtonsBeforeSignIn()
-      showMessage('Need to sign-in to retrieve user info!');
+      showMessage('Sign in to retrieve user information!');
       showMessageDetail(MSG_EMPTY_JSON)
     } else {
       showMessage(error);
