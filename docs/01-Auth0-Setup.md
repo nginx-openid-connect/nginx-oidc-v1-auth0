@@ -40,9 +40,9 @@ In this section, you wll set up a web application that follows the [Auth0 Author
 
 5. In the **Application URIs** section, provide the URI of the NGINX Plus instance in the fields of **Allowed Callback URLs** and **Allowed Logout URLs**.
 
-   - **Allowed Callback URLs**: The URL must include the port number and end in **/\_codexch**. In our example, we used the URL `http://nginx.auth0.test:8011/\_codexch`.
+   - **Allowed Callback URLs**: The URL must include the port number and end in **/\_codexch**. In our example, we used the URL `http://nginx.auth0.test:443/_codexch`.
 
-   - **Allowed Logout URLs**: The URL must include the port number and end in **/\_codexch**. In our example, we used the URL `http://nginx.auth0.test:8011/\_logout`.
+   - **Allowed Logout URLs**: The URL must include the port number and end in **/\_codexch**. In our example, we used the URL `http://nginx.auth0.test:443/_logout`.
 
    > **Note:**
    >

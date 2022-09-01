@@ -128,11 +128,11 @@ Configure a Dev Portal by either referencing **NGINX Management Suite Docs** of 
   >
   > `Response`:
   >
-  > ```json
+  > ```
   > {
   >     :
   >     curl -k https://<CTRL-FQDN>/install/nginx-agent > install.sh && sudo sh install.sh -g devp-group && sudo systemctl start nginx-agent
-  >
+  >     :
   > }
   > ```
 
@@ -225,7 +225,7 @@ Configure a Dev Portal by either referencing **NGINX Management Suite Docs** of 
   >
   > `Body`:
   >
-  > ```json
+  > ```
   > {
   >        :
   >   "authFlowType": "PKCE",
