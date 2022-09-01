@@ -37,7 +37,7 @@ Take the following steps to run NGINX Plus in a Docker container and test OIDC f
 
 ## 3. Run a Browser and Test OIDC
 
-- **Run** a Web Browser with `http://nginx.auth0.test:8011/`:
+- **Run** a Web Browser with `https://nginx.auth0.test`:
 
   ![](./img/run-browser.png)
 
