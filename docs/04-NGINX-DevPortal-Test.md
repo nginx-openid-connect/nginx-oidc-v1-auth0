@@ -18,7 +18,8 @@ Take the following steps to set up NGINX Dev Portal OIDC and test it for Auth0 i
 
   ```bash
   $ sudo vi /etc/hosts
-  127.0.0.1 nginx.devportal.auth0.test
+  127.0.0.1 nginx.devportal.auth0.test  #Note : The provided IP address should be of the host where you installed the Dev Portal packages . 
+  # Also make sure your controller and Dev Portal /etc/hosts files have similar entries.
   ```
 
 ## 2. Install NGINX API Connectivity Manager
@@ -85,7 +86,7 @@ Configure a Dev Portal by either referencing **NGINX Management Suite Docs** of 
   >               "jwksURI": "https://{{auth0Domain}}/.well-known/jwks.json",
   >               "tokenEndpoint": "https://{{auth0Domain}}/oauth/token",
   >               "userInfoEndpoint": "https://{{auth0Domain}}/userinfo",
-  >               "authorizationEndpoint": "https://{{auth0Host}}/authorize",
+  >               "authorizationEndpoint": "https://{{auth0Domain}}/authorize",
   >               "logOffEndpoint": "https://{{auth0Domain}}/v2/logout",
   >               "logOutParams": [
   >                 {
@@ -238,5 +239,8 @@ Configure a Dev Portal by either referencing **NGINX Management Suite Docs** of 
 ## 3. Test Dev Portal OIDC with Auth0
 
 - Open a web browser and access the Dev Portal's FQDN like `http://nginx.devportal.auth0.test`.
+- ![](./img/logged-out-devPortal.png)
 - Try `Login` and `Logout`.
+- ![](./img/login-auth0-devPortal.png)
+- ![](./img/logged-in-devPortal.png)
 - Test the above TWO steps after changing IdP (PKCE option) and updating Dev Portal via NGINX ACM API.
