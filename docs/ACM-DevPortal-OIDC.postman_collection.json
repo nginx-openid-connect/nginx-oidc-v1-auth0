@@ -75,7 +75,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"{{environmentname}}\",\n    \"functions\": [\n        \"DEVPORTAL\"\n    ],\n    \"proxies\": [\n        {\n            \"proxyClusterName\": \"{{devPinstanceGroupName}}\",\n            \"hostnames\": [\n                \"{{devPenvironmentHostname}}\"\n            ],\n            \"runtime\": \"PORTAL-PROXY\",\n            \"policies\": {\n                \"oidc-authz\": [\n                    {\n                        \"action\": {\n                            \"jwksURI\": \"https://{{auth0Domain}}/.well-known/jwks.json\",\n                            \"tokenEndpoint\": \"https://{{auth0Domain}}/oauth/token\",\n                            \"userInfoEndpoint\": \"https://{{auth0Domain}}/userinfo\",\n                            \"authorizationEndpoint\": \"https://{{auth0Host}}/authorize\",\n                            \"logOffEndpoint\": \"https://{{auth0Domain}}/v2/logout\",\n                            \"logOutParams\": [\n                                {\n                                    \"paramType\": \"QUERY\",\n                                    \"key\": \"returnTo\",\n                                    \"value\": \"http://{{devPenvironmentHostname}}/_logout\"\n                                },\n                                {\n                                    \"key\": \"client_id\",\n                                    \"paramType\": \"QUERY\",\n                                    \"value\": \"{{clientId}}\"\n                                }\n                            ],\n                            \"TokenParams\": [\n                                {\n                                    \"paramType\": \"HEADER\",\n                                    \"key\": \"Accept-Encoding\",\n                                    \"value\": \"gzip\"\n                                }\n                            ]\n                        },\n                        \"data\": [\n                            {\n                                \"clientID\": \"{{clientId}}\",\n                                \"clientSecret\": \"{{clientSecret}}\",\n                                \"scopes\": \"openid+profile+email+offline_access\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    ]\n}",
+					"raw": "{\n    \"name\": \"{{environmentname}}\",\n    \"functions\": [\n        \"DEVPORTAL\"\n    ],\n    \"proxies\": [\n        {\n            \"proxyClusterName\": \"{{devPinstanceGroupName}}\",\n            \"hostnames\": [\n                \"{{devPenvironmentHostname}}\"\n            ],\n            \"runtime\": \"PORTAL-PROXY\",\n            \"policies\": {\n                \"oidc-authz\": [\n                    {\n                        \"action\": {\n                            \"jwksURI\": \"https://{{auth0Domain}}/.well-known/jwks.json\",\n                            \"tokenEndpoint\": \"https://{{auth0Domain}}/oauth/token\",\n                            \"userInfoEndpoint\": \"https://{{auth0Domain}}/userinfo\",\n                            \"authorizationEndpoint\": \"https://{{auth0Domain}}/authorize\",\n                            \"logOffEndpoint\": \"https://{{auth0Domain}}/v2/logout\",\n                            \"logOutParams\": [\n                                {\n                                    \"paramType\": \"QUERY\",\n                                    \"key\": \"returnTo\",\n                                    \"value\": \"http://{{devPenvironmentHostname}}/_logout\"\n                                },\n                                {\n                                    \"key\": \"client_id\",\n                                    \"paramType\": \"QUERY\",\n                                    \"value\": \"{{clientId}}\"\n                                }\n                            ],\n                            \"TokenParams\": [\n                                {\n                                    \"paramType\": \"HEADER\",\n                                    \"key\": \"Accept-Encoding\",\n                                    \"value\": \"gzip\"\n                                }\n                            ]\n                        },\n                        \"data\": [\n                            {\n                                \"clientID\": \"{{clientId}}\",\n                                \"clientSecret\": \"{{clientSecret}}\",\n                                \"scopes\": \"openid+profile+email+offline_access\"\n                            }\n                        ]\n                    }\n                ]\n            }\n        }\n    ]\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -297,7 +297,7 @@
 			"type": "string"
 		},
 		{
-			"key": "auth0Host",
+			"key": "auth0Domain",
 			"value": "{{edit-your-domain}}.us.auth0.com",
 			"type": "string"
 		},
@@ -314,6 +314,11 @@
 		{
 			"key": "devPenvironmentHostname",
 			"value": "nginx.devportal.auth0.test",
+			"type": "string"
+		},
+		{
+			"key": "clientSecret",
+			"value": "{{edit-your-clientSecret}}",
 			"type": "string"
 		}
 	]
